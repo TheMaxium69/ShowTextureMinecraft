@@ -1,13 +1,15 @@
 <?php
 
-if (!empty($_GET['pictureName'])){
-
+if (!empty($_GET['pictureName'])) {
     $pictureName = $_GET['pictureName'];
-
 } else {
-
     $pictureName = 'capeDefault.png';
+}
 
+if (!empty($_GET['scale'])) {
+    $scale = $_GET['scale'];
+} else {
+    $scale = 1;
 }
 
 // Vérifiez si la GD Library est activée
@@ -44,20 +46,42 @@ $transparent = imagecolorallocatealpha($croppedImage, 0, 0, 0, 127);
 imagefill($croppedImage, 0, 0, $transparent);
 
 // Rognage de l'image
-imagecopyresampled(
-    $croppedImage, $sourceImage,
-    0, 0, $cropX, $cropY,
-    $cropWidth, $cropHeight,
-    $cropWidth, $cropHeight
-);
+imagecopyresampled($croppedImage, $sourceImage, 0, 0, $cropX, $cropY, $cropWidth, $cropHeight, $cropWidth, $cropHeight);
+
+// Dimensions de l'image agrandie
+$scaleFactor = $scale;
+$targetWidth = $cropWidth * $scaleFactor;
+$targetHeight = $cropHeight * $scaleFactor;
+
+// Créez l'image agrandie
+$targetImage = imagecreatetruecolor($targetWidth, $targetHeight);
+
+// Préservez la transparence
+imagealphablending($targetImage, false);
+imagesavealpha($targetImage, true);
+$transparentTarget = imagecolorallocatealpha($targetImage, 0, 0, 0, 127);
+imagefill($targetImage, 0, 0, $transparentTarget);
+
+// Agrandir l'image rognée
+for ($y = 0; $y < $cropHeight; $y++) {
+    for ($x = 0; $x < $cropWidth; $x++) {
+        $color = imagecolorat($croppedImage, $x, $y);
+        for ($dy = 0; $dy < $scaleFactor; $dy++) {
+            for ($dx = 0; $dx < $scaleFactor; $dx++) {
+                imagesetpixel($targetImage, $x * $scaleFactor + $dx, $y * $scaleFactor + $dy, $color);
+            }
+        }
+    }
+}
 
 // Définissez l'en-tête HTTP pour afficher l'image
 header('Content-Type: image/png');
 
-// Affichez l'image rognée
-imagepng($croppedImage);
+// Affichez l'image agrandie
+imagepng($targetImage);
 
 // Libérez la mémoire
 imagedestroy($sourceImage);
 imagedestroy($croppedImage);
+imagedestroy($targetImage);
 ?>

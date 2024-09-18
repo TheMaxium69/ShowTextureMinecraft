@@ -1,16 +1,15 @@
 <?php
 
-if (!empty($_GET['pictureName'])) {
+if (!empty($_GET['pictureName'])){
+
     $pictureName = $_GET['pictureName'];
+
 } else {
+
     $pictureName = "skinDefault.png";
+
 }
 
-if (!empty($_GET['scale'])) {
-    $scale = $_GET['scale'];
-} else {
-    $scale = 1;
-}
 
 // Vérifiez si la GD Library est activée
 if (!extension_loaded('gd')) {
@@ -70,41 +69,14 @@ $overlayY = -8; // Changer si nécessaire
 // Superposition de l'image avec transparence
 imagecopy($croppedBaseImage, $overlayImage, $overlayX, $overlayY, 0, 0, imagesx($overlayImage), imagesy($overlayImage));
 
-// Dimensions de l'image agrandie
-$scaleFactor = $scale;
-$targetWidth = $cropWidth * $scaleFactor;
-$targetHeight = $cropHeight * $scaleFactor;
-
-// Créez l'image agrandie
-$targetImage = imagecreatetruecolor($targetWidth, $targetHeight);
-
-// Préservez la transparence
-imagealphablending($targetImage, false);
-imagesavealpha($targetImage, true);
-$transparentTarget = imagecolorallocatealpha($targetImage, 0, 0, 0, 127);
-imagefill($targetImage, 0, 0, $transparentTarget);
-
-// Agrandir l'image rognée
-for ($y = 0; $y < $cropHeight; $y++) {
-    for ($x = 0; $x < $cropWidth; $x++) {
-        $color = imagecolorat($croppedBaseImage, $x, $y);
-        for ($dy = 0; $dy < $scaleFactor; $dy++) {
-            for ($dx = 0; $dx < $scaleFactor; $dx++) {
-                imagesetpixel($targetImage, $x * $scaleFactor + $dx, $y * $scaleFactor + $dy, $color);
-            }
-        }
-    }
-}
-
 // Définir l'en-tête HTTP pour afficher l'image
 header('Content-Type: image/png');
 
-// Afficher l'image agrandie
-imagepng($targetImage);
+// Afficher l'image finale
+imagepng($croppedBaseImage);
 
 // Libérer la mémoire
 imagedestroy($baseImage);
 imagedestroy($croppedBaseImage);
 imagedestroy($overlayImage);
-imagedestroy($targetImage);
 ?>
